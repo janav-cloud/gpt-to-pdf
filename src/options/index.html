@@ -1,33 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings - GPT to PDF</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - GPT to PDF</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <h1>PDF Export Settings</h1>
-    <label>Include in PDF:</label>
-    <div>
-      <input type="checkbox" id="includePrompts" checked> Include Prompts
-      <input type="checkbox" id="includeAnswers" checked> Include Answers
+    <div class="container">
+        <div class="header">
+            <img src="../../public/settings-icon.png" alt="Settings Icon" class="icon">
+            <h1>PDF Export Settings</h1>
+        </div>
+        <label>Include in PDF:</label>
+        <div>
+            <input type="checkbox" id="includePrompts" checked>
+            <label for="includePrompts">Include Prompts</label>
+            <input type="checkbox" id="includeAnswers" checked>
+            <label for="includeAnswers">Include Answers</label>
+        </div>
+        <label for="theme">PDF Theme:</label>
+        <select id="theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="professional">Professional</option>
+        </select>
+        <label for="font">Font:</label>
+        <select id="font">
+            <option value="Times">Times New Roman</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Arial">Arial</option>
+        </select>
+        <button id="saveBtn">Save Settings</button>
     </div>
-    <label for="theme">PDF Theme:</label>
-    <select id="theme">
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
-      <option value="professional">Professional</option>
-    </select>
-    <label for="font">Font:</label>
-    <select id="font">
-      <option value="Times">Times New Roman</option>
-      <option value="Helvetica">Helvetica</option>
-      <option value="Arial">Arial</option>
-    </select>
-    <button id="saveBtn">Save Settings</button>
-  </div>
-  <script src="index.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>
