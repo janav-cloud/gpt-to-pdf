@@ -1,0 +1,44 @@
+body {
+  width: 400px;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+h1 {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+select, button {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+input[type="checkbox"] {
+  margin: 5px 10px 5px 0;
+}
