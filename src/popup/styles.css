@@ -1,38 +1,59 @@
 body {
-  width: 300px;
-  padding: 10px;
-  font-family: Arial, sans-serif;
+    width: 350px; /* Slightly wider for better spacing */
+    padding: 20px; /* More padding for a cleaner feel */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern system font */
+    background-color: #f4f7f6; /* Light, soft background */
+    color: #333; /* Darker, readable text */
+    margin: 0; /* Reset default body margin */
 }
 
 .container {
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Consistent spacing between elements */
 }
 
 h1 {
-  font-size: 18px;
-  margin-bottom: 10px;
+    font-size: 22px; /* Slightly larger, more prominent title */
+    margin-bottom: 20px;
+    color: #2c3e50; /* Darker heading color */
 }
 
 button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  width: 100%;
-  margin-bottom: 10px;
+    background-color: #007bff; /* Modern blue primary color */
+    color: white;
+    padding: 12px 20px; /* Increased padding for better touch targets */
+    border: none;
+    border-radius: 8px; /* More rounded corners */
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px; /* Slightly larger font for the button */
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
 button:hover {
-  background-color: #45a049;
+    background-color: #0056b3; /* Darker shade on hover */
+}
+
+.customize-icon {
+    width: 18px; /* Adjust size as needed */
+    height: 18px;
+    margin-right: 8px;
+    vertical-align: middle; /* Align icon with text */
 }
 
 a {
-  color: #0066cc;
-  text-decoration: none;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+    display: inline-flex; /* Enable flexbox for alignment */
+    align-items: center;
 }
 
 a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
+    color: #0056b3;
 }
