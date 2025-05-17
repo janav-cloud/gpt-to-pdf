@@ -10,7 +10,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
     if (response.status === 'success') {
       try {
-        generatePDF(response.conversation, response.settings);
+        generatePDF(response.conversation, response.settings, response.chatTitle);
         alert('PDF exported successfully!');
       } catch (error) {
         console.error('PDF generation error:', error);
@@ -22,72 +22,124 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   });
 });
 
-// Generate PDF
-function generatePDF(conversation, settings) {
-    console.log('Starting PDF generation with settings:', settings);
-    const doc = new jspdf.jsPDF();
-    let yOffset = 20;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+function generatePDF(conversation, settings, chatTitle) {
+  const themes = {
+    light: {
+      headerColor: '#222',
+      promptColor: '#1565c0',
+      answerColor: '#333',
+      background: '#fff',
+      answerBg: '#f5f5f5'
+    },
+    dark: {
+      headerColor: '#fff',
+      promptColor: '#90caf9',
+      answerColor: '#eee',
+      background: '#222',
+      answerBg: '#333'
+    },
+    professional: {
+      headerColor: '#003366',
+      promptColor: '#003366',
+      answerColor: '#333',
+      background: '#f0f0f0',
+      answerBg: '#e6e6e6'
+    }
+  };
+  const theme = themes[settings.theme] || themes.light;
+  const fontMap = {
+    Roboto: 'Roboto',
+    Courier: 'Courier'
+  };
+  const font = fontMap[settings.font] || 'Roboto';
 
-    // Theme
-    const themes = {
-        light: { bg: [255, 255, 255], text: [0, 0, 0], header: [0, 0, 0] },
-        dark: { bg: [0, 0, 0], text: [255, 255, 255], header: [200, 200, 200] },
-        professional: { bg: [240, 240, 240], text: [0, 0, 0], header: [0, 51, 102] }
-    };
-    const theme = themes[settings.theme] || themes.light;
-    console.log('Applied theme:', theme);
+  const docDefinition = {
+    content: [
+      { text: chatTitle || 'GPT Conversation Export', style: 'header', margin: [0, 0, 0, 16] },
+      ...conversation.flatMap(item => {
+        // Label for prompt/answer
+        const label = {
+          text: item.type === 'prompt' ? 'Prompt:' : 'Answer:',
+          bold: true,
+          color: item.type === 'prompt' ? theme.promptColor : theme.answerColor,
+          margin: [0, 8, 0, 2]
+        };
 
-    // Set background color for the current page
-    doc.setFillColor(theme.bg[0], theme.bg[1], theme.bg[2]);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F'); // 'F' means fill
-
-    // Fonts
-    const validFonts = ['Times', 'Helvetica', 'Courier'];
-    const font = validFonts.includes(settings.font) ? settings.font : 'Times';
-    doc.setFont(font);
-    console.log('Set font:', font);
-
-    // Add title
-    doc.setFontSize(16);
-    doc.setTextColor(theme.header[0], theme.header[1], theme.header[2]);
-    doc.text('GPT Conversation Export', 20, yOffset);
-    yOffset += 15;
-    console.log('Added title');
-
-    // Add content
-    doc.setFontSize(12);
-    doc.setTextColor(theme.text[0], theme.text[1], theme.text[2]);
-    conversation.forEach((item, index) => {
-        if (yOffset > pageHeight - 30) { // Add page if near bottom
-            doc.addPage();
-            // Set background color for the new page
-            doc.setFillColor(theme.bg[0], theme.bg[1], theme.bg[2]);
-            doc.rect(0, 0, pageWidth, pageHeight, 'F');
-            yOffset = 20;
-            console.log('Added new page at item', index);
+        // Detect code blocks and split
+        if (/```[\s\S]*?```/.test(item.text)) {
+          const parts = item.text.split(/(```[\s\S]*?```)/g).filter(Boolean);
+          return [
+            label,
+            ...parts.map(part => {
+              if (part.startsWith('```') && part.endsWith('```')) {
+                return {
+                  text: part.replace(/```/g, '').trim(),
+                  style: 'code',
+                  margin: [0, 0, 0, 8]
+                };
+              } else {
+                return {
+                  text: part,
+                  style: item.type,
+                  margin: [0, 0, 0, 8]
+                };
+              }
+            }),
+            { text: '', margin: [0, 0, 0, 8] } // extra space after each Q/A
+          ];
+        } else {
+          return [
+            label,
+            {
+              text: item.text,
+              style: item.type,
+              margin: [0, 0, 0, 12]
+            }
+          ];
         }
-        if (settings.includePrompts && item.type === 'prompt') {
-            doc.setFontSize(12);
-            doc.setFont(font, 'bold');
-            const promptText = item.text.length > 1000 ? item.text.substring(0, 1000) + '...' : item.text;
-            doc.text(`Prompt: ${promptText}`, 20, yOffset, { maxWidth: 170 });
-            yOffset += doc.getTextDimensions(`Prompt: ${promptText}`, { maxWidth: 170 }).h + 10;
-            console.log('Added prompt:', promptText.substring(0, 50) + '...');
-        }
-        if (settings.includeAnswers && item.type === 'answer') {
-            doc.setFontSize(12);
-            doc.setFont(font, 'normal');
-            const answerText = item.text.length > 1000 ? item.text.substring(0, 1000) + '...' : item.text;
-            doc.text(`Answer: ${answerText}`, 20, yOffset, { maxWidth: 170 });
-            yOffset += doc.getTextDimensions(`Answer: ${answerText}`, { maxWidth: 170 }).h + 10;
-            console.log('Added answer:', answerText.substring(0, 50) + '...');
-        }
-    });
+      })
+    ],
+    defaultStyle: {
+      font: font,
+      fontSize: 12,
+      color: theme.answerColor
+    },
+    styles: {
+      header: {
+        fontSize: 18,
+        bold: true,
+        color: theme.headerColor,
+        margin: [0, 0, 0, 10]
+      },
+      prompt: {
+        bold: false,
+        color: theme.promptColor,
+        fontSize: 13,
+        margin: [0, 8, 0, 2]
+      },
+      answer: {
+        color: theme.answerColor,
+        margin: [0, 0, 0, 8]
+      },
+      code: {
+        font: 'Courier',
+        fontSize: 11,
+        color: '#222',
+        fillColor: theme.answerBg,
+        margin: [0, 4, 0, 8]
+      }
+    },
+    pageMargins: [32, 32, 32, 32],
+    footer: function(currentPage, pageCount) {
+      return {
+        text: 'Generated by GPT to PDF : Made with 💌 by Janav Dua',
+        alignment: 'center',
+        fontSize: 9,
+        color: '#888',
+        margin: [0, 10, 0, 0]
+      };
+    }
+  };
 
-    // Save PDF
-    console.log('Saving PDF');
-    doc.save('gpt_conversation.pdf');
-    console.log('PDF save called');
+  pdfMake.createPdf(docDefinition).download('gpt_conversation.pdf');
 }

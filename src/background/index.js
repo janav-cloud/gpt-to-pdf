@@ -1,17 +1,3 @@
-// jsPDF script
-try {
-  importScripts('../../public/libs/jspdf.umd.min.js');
-  console.log('jsPDF importScripts executed');
-  if (!self.jspdf || !self.jspdf.jsPDF) {
-    console.error('jsPDF not loaded correctly: self.jspdf is', self.jspdf);
-  } else {
-    console.log('jsPDF loaded successfully');
-  }
-} catch (e) {
-  console.error('Failed to load jsPDF:', e);
-}
-
-// Scraper Settings
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'exportToPDF') {
     chrome.storage.sync.get(['pdfSettings'], (result) => {
@@ -19,55 +5,67 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         includePrompts: true,
         includeAnswers: true,
         theme: 'light',
-        font: 'Times'
+        font: 'Roboto'
       };
-      console.log('Retrieved settings:', settings);
-
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (!tabs[0].url.startsWith('http') && !tabs[0].url.startsWith('https')) {
-          console.error('Invalid page URL:', tabs[0].url);
-          sendResponse({ status: 'error', error: 'Cannot export from this page' });
-          return;
-        }
-
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          function: scrapeConversation
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            console.error('executeScript error:', chrome.runtime.lastError);
-            sendResponse({ status: 'error', error: chrome.runtime.lastError.message });
-            return;
+        // Inject DOMPurify first
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tabs[0].id },
+            files: ['public/libs/DOMPurify.js']
+          },
+          () => {
+            // Now run the scrape function
+            chrome.scripting.executeScript(
+              {
+                target: { tabId: tabs[0].id },
+                func: scrapeWithDOMPurify
+              },
+              (results) => {
+                const result = results && results[0] && results[0].result ? results[0].result : {};
+                const conversation = result.conversation || [];
+                const chatTitle = result.chatTitle || 'ChatGPT Conversation';
+                if (conversation.length > 0) {
+                  sendResponse({ status: 'success', conversation, chatTitle, settings });
+                } else {
+                  sendResponse({ status: 'error', error: 'No conversation data found' });
+                }
+              }
+            );
           }
-
-          const conversation = results[0]?.result || [];
-          console.log('Scraped conversation:', conversation);
-          if (conversation.length > 0) {
-            sendResponse({ status: 'success', conversation, settings });
-          } else {
-            sendResponse({ status: 'error', error: 'No conversation data found' });
-          }
-        });
+        );
       });
     });
     return true;
   }
 });
 
-// Scraper Injection
-function scrapeConversation() {
+function scrapeWithDOMPurify() {
+  let chatTitle = document.querySelector('h1, header h1, .text-2xl, .text-lg')?.textContent?.trim() || 'ChatGPT Conversation';
+
   const conversation = [];
-  const messages = document.querySelectorAll('div[class*="chat-message"], div[class*="message"], .prose, .whitespace-pre-wrap');
-  messages.forEach((msg, index) => {
-    const text = msg.textContent.trim();
-    if (text) {
-      const isPrompt = msg.classList.contains('user-message') || index % 2 === 0; // Fallback to index-based logic
-      conversation.push({
-        type: isPrompt ? 'prompt' : 'answer',
-        text: text
-      });
-    }
-  });
-  console.log('Scraped:', conversation);
-  return conversation;
+
+  // 1. User prompts: exact selector you gave
+  document.querySelectorAll('div[class*="max-w-"][class*="user-chat-width"] > .whitespace-pre-wrap')
+    .forEach(node => {
+      if (node.textContent.trim()) {
+        conversation.push({
+          type: 'prompt',
+          text: node.textContent.trim()
+        });
+      }
+    });
+
+  // 2. Assistant answers: exact selector you gave
+  document.querySelectorAll('.markdown.prose > p')
+    .forEach(node => {
+      if (node.textContent.trim()) {
+        conversation.push({
+          type: 'answer',
+          text: node.textContent.trim()
+        });
+      }
+    });
+
+  return { conversation, chatTitle };
 }
